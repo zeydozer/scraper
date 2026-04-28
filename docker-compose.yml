@@ -1,0 +1,10 @@
+services:
+  scraper:
+    build:
+      context: .
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    command: python scraper.py
+    restart: "no"
