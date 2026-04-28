@@ -8,6 +8,6 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY scraper.py merge.py .
+COPY scraper.py merge.py empty.py second_pass.py second_pass_ddg.py filter.py .
 
 CMD ["python", "scraper.py", "--part", "1"]

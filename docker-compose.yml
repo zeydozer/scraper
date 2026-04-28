@@ -16,3 +16,37 @@ services:
       - .:/app
     command: python merge.py
     restart: "no"
+
+  empty:
+    build:
+      context: .
+    volumes:
+      - .:/app
+    command: python empty.py
+    restart: "no"
+
+  second_pass:
+    build:
+      context: .
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    command: python second_pass.py
+    restart: "no"
+
+  second_pass_ddg:
+    build:
+      context: .
+    volumes:
+      - .:/app
+    command: python second_pass_ddg.py
+    restart: "no"
+
+  filter:
+    build:
+      context: .
+    volumes:
+      - .:/app
+    command: python filter.py
+    restart: "no"
