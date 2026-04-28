@@ -8,3 +8,11 @@ services:
       - .:/app
     command: python scraper.py
     restart: "no"
+
+  merge:
+    build:
+      context: .
+    volumes:
+      - .:/app
+    command: python merge.py
+    restart: "no"

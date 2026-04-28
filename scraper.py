@@ -1,11 +1,14 @@
 """
 Pırlanta üretim/imalat işletmelerinin Instagram adreslerini toplar.
 Pipeline: Google Places API → Website scrape → Google Custom Search fallback
+
+Kullanım: python diamond_scraper.py --part 1   (1-6 arası)
 """
 import os
 import re
 import json
 import time
+import argparse
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
@@ -21,14 +24,30 @@ SEARCH_QUERIES = [
     "pırlanta imalatçısı",
 ]
 
-# Türkiye'nin kuyumculuk açısından önemli şehirleri
-CITIES = [
-    "İstanbul", "Ankara", "İzmir", "Bursa", "Antalya",
-    "Gaziantep", "Konya", "Kayseri", "Adana", "Mersin",
-    "Şanlıurfa", "Diyarbakır", "Eskişehir", "Samsun", "Trabzon",
+# Türkiye'nin tüm 81 ili (alfabetik)
+ALL_CITIES = [
+    "Adana", "Adıyaman", "Afyonkarahisar", "Ağrı", "Aksaray",
+    "Amasya", "Ankara", "Antalya", "Ardahan", "Artvin",
+    "Aydın", "Balıkesir", "Bartın", "Batman", "Bayburt",
+    "Bilecik", "Bingöl", "Bitlis", "Bolu", "Burdur",
+    "Bursa", "Çanakkale", "Çankırı", "Çorum", "Denizli",
+    "Diyarbakır", "Düzce", "Edirne", "Elazığ", "Erzincan",
+    "Erzurum", "Eskişehir", "Gaziantep", "Giresun", "Gümüşhane",
+    "Hakkari", "Hatay", "Iğdır", "Isparta", "İstanbul",
+    "İzmir", "Kahramanmaraş", "Karabük", "Karaman", "Kars",
+    "Kastamonu", "Kayseri", "Kilis", "Kırıkkale", "Kırklareli",
+    "Kırşehir", "Kocaeli", "Konya", "Kütahya", "Malatya",
+    "Manisa", "Mardin", "Mersin", "Muğla", "Muş",
+    "Nevşehir", "Niğde", "Ordu", "Osmaniye", "Rize",
+    "Sakarya", "Samsun", "Siirt", "Sinop", "Sivas",
+    "Şanlıurfa", "Şırnak", "Tekirdağ", "Tokat", "Trabzon",
+    "Tunceli", "Uşak", "Van", "Yalova", "Yozgat",
+    "Zonguldak",
 ]
+CHUNK_SIZE = 15
+TOTAL_PARTS = (len(ALL_CITIES) + CHUNK_SIZE - 1) // CHUNK_SIZE  # = 6
 
-OUTPUT_FILE = "diamond_manufacturers.json"
+OUTPUT_TEMPLATE = "diamond_manufacturers_part{part}.json"
 INSTAGRAM_REGEX = re.compile(
     r"(?:https?://)?(?:www\.)?instagram\.com/([A-Za-z0-9_.]+)/?",
     re.IGNORECASE,
@@ -37,7 +56,10 @@ EMAIL_REGEX = re.compile(
     r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}",
 )
 # Filtrelenecek genel hesaplar (paylaş butonu vs.)
-IG_BLACKLIST = {"explore", "p", "reel", "reels", "tv", "stories", "accounts", "share"}
+IG_BLACKLIST = {
+    "explore", "p", "reel", "reels", "tv", "stories", "accounts", "share",
+    "rsrc.php",
+}
 # Email false positive filtreleri
 EMAIL_BLACKLIST_EXT = (".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".ico")
 EMAIL_BLACKLIST_DOMAINS = ("sentry.io", "wixpress.com", "example.com", "domain.com")
@@ -171,11 +193,20 @@ def search_instagram_via_google(business_name: str) -> str | None:
 
 
 # ============ MAIN ============
-def main():
+def main(part: int):
+    if not 1 <= part <= TOTAL_PARTS:
+        raise SystemExit(f"--part {part} geçersiz. 1 ile {TOTAL_PARTS} arası olmalı.")
+
+    start = (part - 1) * CHUNK_SIZE
+    cities = ALL_CITIES[start:start + CHUNK_SIZE]
+    output_file = OUTPUT_TEMPLATE.format(part=part)
+    print(f"\n=== PART {part}/{TOTAL_PARTS} | {len(cities)} şehir: {', '.join(cities)} ===")
+
     seen_ids = set()
+    seen_instagram_handles = set()
     enriched = []
 
-    for city in CITIES:
+    for city in cities:
         for q in SEARCH_QUERIES:
             query = f"{q} {city}"
             print(f"\n[Places] {query}")
@@ -204,6 +235,13 @@ def main():
                     if ig_handle:
                         ig_source = "google_search"
 
+                if ig_handle:
+                    ig_key = ig_handle.lower().strip()
+                    if ig_key in seen_instagram_handles:
+                        print(f"  • {name} → {ig_handle} (tekrar IG, atlandı)")
+                        continue
+                    seen_instagram_handles.add(ig_key)
+
                 enriched.append({
                     "place_id": pid,
                     "name": name,
@@ -220,14 +258,18 @@ def main():
                 print(f"  • {name} → {ig_or_mail}")
                 time.sleep(0.5)  # rate limit nezaketi
 
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
+    with open(output_file, "w", encoding="utf-8") as f:
         json.dump(enriched, f, ensure_ascii=False, indent=2)
 
     total = len(enriched)
     with_ig = sum(1 for e in enriched if e["instagram_handle"])
     with_mail = sum(1 for e in enriched if e["emails"])
-    print(f"\n✓ {total} işletme | {with_ig} IG | {with_mail} sadece email | → {OUTPUT_FILE}")
+    print(f"\n✓ Part {part}: {total} işletme | {with_ig} IG | {with_mail} sadece email | → {output_file}")
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--part", type=int, default=int(os.getenv("PART", "1")),
+                        help=f"İşlenecek parça (1-{TOTAL_PARTS})")
+    args = parser.parse_args()
+    main(args.part)

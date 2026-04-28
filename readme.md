@@ -21,4 +21,18 @@ Calistirmak icin:
 docker compose run --rm scraper
 ```
 
-Cikti dosyasi proje klasorune `diamond_manufacturers.json` olarak yazilir.
+Farkli bir parcayi calistirmak icin:
+
+```bash
+docker compose run --rm scraper python scraper.py --part 2
+```
+
+Cikti dosyasi proje klasorune `diamond_manufacturers_part1.json` gibi yazilir.
+
+Part dosyalarini birlestirmek icin:
+
+```bash
+docker compose run --rm merge
+```
+
+Birlesik cikti `diamond_manufacturers_merged.json` olarak yazilir.
