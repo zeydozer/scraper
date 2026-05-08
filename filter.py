@@ -7,17 +7,18 @@ Filtreler:
 
 Kullanım: python filter_for_messaging.py
 Çıktı:
-  - diamond_manufacturers_clean.json      → mesajlaşmaya hazır liste
-  - diamond_manufacturers_rejected.json   → filtre dışı kalanlar (review için)
+  - clean.json      → mesajlaşmaya hazır liste
+  - rejected.json   → filtre dışı kalanlar (review için)
 """
 import re
 import json
 import unicodedata
 from urllib.parse import urlparse
 
-INPUT_FILE = "diamond_manufacturers_enriched.json"
-CLEAN_FILE = "diamond_manufacturers_clean.json"
-REJECTED_FILE = "diamond_manufacturers_rejected.json"
+INPUT_FILE = "enriched.json"
+CLEAN_FILE = "clean.json"
+REJECTED_FILE = "rejected.json"
+TOTAL_FILE = "total.json"
 
 # İsmi açıkça kuyumcu/pırlanta DIŞI gösteren kelimeler
 NEGATIVE_KW = [
@@ -41,6 +42,7 @@ POSITIVE_KW = [
     "altın", "altin", "gümüş", "gumus",
     "diamond", "jewelry", "jeweler", "jewellery",
     "tektaş", "tektas", "yüzük", "tasarım", "tasarim",
+    "bilezik", "kolye", "küpe", "set", "takı", "taki",
 ]
 
 # Anlamlı isim kelimesini belirlemek için atılacak stop words
@@ -170,6 +172,14 @@ def main():
     with open(REJECTED_FILE, "w", encoding="utf-8") as f:
         json.dump(rejected, f, ensure_ascii=False, indent=2)
 
+    # Total: sadece IG'si veya email'i olan kayıtlar (mesajlaşma hedefleri)
+    total = [
+        e for e in clean
+        if e.get("instagram_handle") or e.get("emails")
+    ]
+    with open(TOTAL_FILE, "w", encoding="utf-8") as f:
+        json.dump(total, f, ensure_ascii=False, indent=2)
+
     # Özet
     clean_ig = sum(1 for e in clean if e.get("instagram_handle"))
     clean_mail = sum(1 for e in clean if e.get("emails"))
@@ -183,7 +193,8 @@ def main():
     print(f"  Sadece email:      {clean_mail}  ← Mail hedefleri")
     print(f"  İletişim yok:      {clean_neither}")
     print(f"  Toplam ulaşılabilir: {clean_ig + clean_mail}")
-    print(f"\n→ {CLEAN_FILE}")
+    print(f"\n→ {CLEAN_FILE}  (filtre sonrası tüm temiz kayıtlar)")
+    print(f"→ {TOTAL_FILE}  (sadece ulaşılabilir → mesajlaşma hedefleri)")
     print(f"→ {REJECTED_FILE}  (gözden geçir, yanlış elenen varsa söyle)")
 
 

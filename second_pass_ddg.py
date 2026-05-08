@@ -16,8 +16,8 @@ import argparse
 from urllib.parse import urlparse
 from ddgs import DDGS
 
-INPUT_FILE = "diamond_manufacturers_merged.json"
-OUTPUT_FILE = "diamond_manufacturers_enriched.json"
+INPUT_FILE = "merged.json"
+OUTPUT_FILE = "enriched.json"
 
 # Aggregator/dizin domainleri
 DIRECTORY_DOMAINS = {

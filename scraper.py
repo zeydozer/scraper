@@ -19,9 +19,12 @@ CSE_API_KEY = os.getenv("GOOGLE_CSE_API_KEY")
 CSE_ID = os.getenv("GOOGLE_CSE_ID")
 
 SEARCH_QUERIES = [
-    "pırlanta üretim",
-    "pırlanta imalat",
-    "pırlanta imalatçısı",
+    "pırlanta montür",
+    "pırlanta mount",
+    "pırlanta mounting",
+    "diamond montür",
+    "diamond mount",
+    "diamond mounting",
 ]
 
 # Türkiye'nin tüm 81 ili (alfabetik)
@@ -47,7 +50,7 @@ ALL_CITIES = [
 CHUNK_SIZE = 15
 TOTAL_PARTS = (len(ALL_CITIES) + CHUNK_SIZE - 1) // CHUNK_SIZE  # = 6
 
-OUTPUT_TEMPLATE = "diamond_manufacturers_part{part}.json"
+OUTPUT_TEMPLATE = "part{part}.json"
 INSTAGRAM_REGEX = re.compile(
     r"(?:https?://)?(?:www\.)?instagram\.com/([A-Za-z0-9_.]+)/?",
     re.IGNORECASE,

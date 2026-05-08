@@ -6,8 +6,8 @@ import json
 import glob
 from urllib.parse import urlparse
 
-INPUT_GLOB = "diamond_manufacturers_part*.json"
-OUTPUT_FILE = "diamond_manufacturers_merged.json"
+INPUT_GLOB = "part*.json"
+OUTPUT_FILE = "merged.json"
 
 
 def domain_of(url: str | None) -> str | None:

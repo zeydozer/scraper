@@ -5,7 +5,7 @@ Kullanım: python inspect_empty.py
 import json
 import random
 
-INPUT_FILE = "diamond_manufacturers_merged.json"
+INPUT_FILE = "merged.json"
 SAMPLE_SIZE = 20
 
 with open(INPUT_FILE, encoding="utf-8") as f:
